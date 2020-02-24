@@ -1,0 +1,23 @@
+---
+output: github_document
+---
+
+```{r setup, include = FALSE}
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  # fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+
+
+library(emo)
+```
+
+
+# Best Statistical Practices 2020: mediator
+
+Jordan Creed
+
+`r emo::ji("tv")` [View Slides](https://github.com/jhcreed/bsp2020-mediator)
+
