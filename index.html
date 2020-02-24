@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>mediator</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Jordan Creed" />
+    <link href="libs/animate.css-3.7.2/animate.xaringan.css" rel="stylesheet" />
+    <link href="libs/panelset-0.0.13/panelset.css" rel="stylesheet" />
+    <script src="libs/panelset-0.0.13/panelset.js"></script>
+    <link href="libs/tachyons-4.11.1/tachyons.min.css" rel="stylesheet" />
+    <link href="libs/text-poster-1.0.1/text-poster.css" rel="stylesheet" />
+    <script src="libs/text-poster-1.0.1/text-poster.js"></script>
+    <script src="libs/text-poster-1.0.1/text-poster-init.js"></script>
+    <script src="libs/kePrint-0.0.1/kePrint.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+
+
+
+
+class: center middle hide-count hide-logo
+background-image: url(figures/moffittlogo.png) 
+background-size: 15%
+background-position: bottom 5% right 5%
+
+&lt;div class="talk-logo"&gt;&lt;/div&gt;
+
+.talk-meta[
+  .talk-title[# mediator &lt;br&gt; &lt;br&gt; .smaller[an R package for conducting &lt;br&gt; causal mediation analyses]]
+
+  .talk-author[Jordan Creed]
+  
+  .talk-date[&lt;img src="figures/twitter_logo.svg" alt="Twitter logo" width="24px"/&gt; @jhcreed]
+]
+
+???
+
+---
+
+## Mediation analysis
+
+Examines an exposure and outcome through an intermediate variable (mediator) 
+
+Causal relationship 
++ Understanding the mechanics behind an association 
++ NOT prediction
+    
+Estimate the direct and indirect effects 
+
+.h-center[
+![](figures/basic_example_dag.png)
+]
+
+
+---
+
+## Diected Acyclic Graphs (DAGs)
+
+.w-75.h-center[
+![](figures/example_dag_2.png)
+]
+
+DAGs contain variables of interest and common causes
+
+Time ordered 
+
+Quickly assess assocations between variables 
+
+Rules for reading DAGs 
++ .accent-blue[ Modern Epidemiology - Chapter 12 ]
++ .accent-blue[ Causal Inference - https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/ ] 
+
+---
+
+## Classic mediation analysis
+
+Baron and Kenny aka the product method 
++ https://www.sesp.org/files/The%20Moderator-Baron.pdf
++ Over 90,000 citations 
+
+Criteria to be a mediator: 
++ Changing the exposure change the mediator (Race -&gt; Access/ QoC) 
++ The mediator affect the outcome (Access / Qoc -&gt; Lethal outcomes)
++ Changing the exposure change the outcome .accent-blue[ ( 😬 unless the indirect and direct effects cancel out) ]
++ After controlling for the mediator, the previously significant relationship between the exposure and the outcome is no longer significant .accent-blue[ ( 😬 unless it partial mediaton) ]
+
+---
+
+## Baron and Kenny approach 
+
+If .accent-orange[X] is the exposure, .accent-orange[ Y ] the outcome, .accent-orange[ M ] the mediator and .accent-orange[ C ] the covariates
++ Y and M are continuous
+    
+Step 1: Fit E[M] = `\(\beta_{0}\)` + `\(\beta_{1} a\)` + `\(\beta_{2} c\)`
+
+Step 2: Fit E[Y] = `\(\theta_{0}\)` + `\(\theta_{1} a\)` + `\(\theta_{2} m\)` + `\(\theta_{4} c\)`
+
+Direct effect = `\(\theta_{1} a\)`
++ Direct effect is the exposure effect on the outcome at a fixed level of the mediator
+
+Indirect effect = `\(\theta_{2} \beta_{1}\)`
++ Indirect effect is the effect on the outcome of changes of the exposure which operate through the mediator
+
+👉 .accent-blue[Does not accommodate exposure-mediator interactions]
+
+---
+class: center middle methods-title
+
+<div class="text-poster" style="width:90%;height:80%;padding:1em;">
+<div class="text-poster__text" data-text="Causal &#10;  Inference &#10;  Methods"></div>
+</div>
+
+&lt;style type="text/css"&gt;
+# .strive-to-recruit .text-poster .line-container {
+#   color: #000000;
+# }
+.methods-title {
+  background: #87CEEB;
+}
+&lt;/style&gt;
+
+---
+
+## Allowing exposure-mediator interactions
+
+Step 1: Fit E[M] = `\(\beta_{0} + \beta_{1} a + \beta_{2} c\)` 
++ .accent-blue[same as previously]
+
+Step 2: Fit E[Y] = `\(\theta_{0} + \theta_{1} a + \theta_{2} m + \theta_{3} am + \theta_{4} c\)`
+
+.accent-blue[Assuming a binary exposure changing level a^*^ = 0 to a = 1]
+
+
+
+&gt; Controlled direct effect = `\(( \theta_{0} + \theta_{3} m)(a - a^{*})\)`
+
+&gt; Natural indirect effect = `\(\{ \theta_{0} + \theta_{3} ( \beta_{0} + \beta_{1} a^{*} + \beta_{2} c) \}(a - a^{*})\)`
+
+&gt; Natural indirect effect = `\(( \theta_{2} \beta_{1} + \theta_{3} \beta_{1}a) (a - a^{*})\)`
+
+
+
+👉 When no exposure-mediator interaction is present, `\(\theta_{3}\)` = 0
++ CDE = NDE = `\(\theta_{1}\)` and NIE = `\(\theta_{2} \beta_{1}\)`
++ .accent-blue[Same as the direct and indirect effects in Baron and Kenny]
+
+---
+
+## Interpreting the estimates
+
+Controlled direct effect = `\(( \theta_{0} + \theta_{3} m)(a - a^{*})\)`
++ How much the outcome would change if exposure changed from a∗ to a and the mediator were controlled at level m in the population
+
+Natural indirect effect = `\(\{ \theta_{0} + \theta_{3} ( \beta_{0} + \beta_{1} a^{*} + \beta_{2} c) \}(a - a^{*})\)`
++ How much the outcome would change if exposure were set at level a versus a∗ but for each individual the mediator were kept at the level it would have taken in the absence of exposure
+
+Natural indirect effect = `\(( \theta_{2} \beta_{1} + \theta_{3} \beta_{1}a) (a - a^{*})\)`
++ How much the outcome would change if exposure were controlled at level a but the mediator were changed from the level it would take with a∗ to the level it would take with a
+
+Total effect of A = NDE + NIE 
+---
+
+## Mediation or confounding ...
+
+.w-75.h-center[
+&lt;img src="figures/jama_screenshot.png"&gt;
+]
+
+---
+
+## Lets see the DAG 
+
+.h-center[
+&lt;img src="figures/jama_dag.png"&gt;
+]
+
+???
+
+JAMA ONCOLOGY
+
+Confounder: variables that are related to both the intervention and the outcome, but are not on the causal pathway
+Mediator: on the causal pathway
+"... we adjusted for cancer and treatment-related confounders ..."
+
+---
+
+## mediator - https://github.com/GerkeLab/mediator
+
+.h-center[
+&lt;img src="figures/mediator_github_page.png"&gt;
+]
+
+??? 
+
+Explain the goals for the package, its outputs and installation
+
+---
+
+# mediator - quick start 
+
+Required arguments 
++ `data = ` the data for performing the analysis 
++ `out.model = ` fitted model object for the outcome
+    + `glm`, `lm` or `coxph`
++ `med.model = ` fitted model object for the mediator
+    + `glm` or `lm`
++ `treat = ` character string indicating the name of the treatment/exposure variable
+
+Default arguments
++ `a = ` numeric value indicating the exposure level
+    + default = 1
++ `a_star = ` numeric value indicating the compared exposure level
+    + default = 0
++ `m = ` numeric value indicating the level of the mediator
+    + default = 1
++ `boot_rep = ` numeric value indicating the number of repetitions to use when utalizing bootstrap to calculate confidence intervals
+    + deault = 0 (Delta method)
+    
+---
+
+## Is the effect of sex on overall survival mediated through smoking status in pancreatic cancer ...
+
++ Smoking is more prevalent in males than females 
++ Males have higher incidence and death rates for pancreatic cancer than females
++ Tobacco smoking the only established modifiable risk factor for pancreatic cancer
+
+
+.h-center[
+![](figures/results_dag.png)
+]
+
+---
+
+## Is the effect of sex on overall survival mediated through smoking status in pancreatic cancer ...
+
+
+```r
+library(mediator)
+library(tidyverse)
+library(survival)
+
+load("~/Documents/github/TCGAclinical/data/clinical_survival_pancancer_atlas.RData")
+
+dat %&gt;% 
+  filter(acronym == "PAAD") %&gt;% 
+  # do some data cleaning here ...
+  mediator(out.model = coxph(Surv(OS.time,OS) ~ gender_binary + ever_smoker + 
+                             age_at_initial_pathologic_diagnosis + 
+                             histological_grade + gender_binary*ever_smoker,
+                           data = .),
+           med.model = glm(ever_smoker ~ gender_binary + 
+                           age_at_initial_pathologic_diagnosis + histological_grade,
+                           data = .,
+                           family = "binomial"),
+           treat = "gender_binary" )
+```
+
+.footnote.pull-left[Full code available at: https://github.com/GerkeLab/mediator/blob/master/man/bsp2020/abstract.Rmd]
+---
+
+## Is the effect of sex on overall survival mediated through smoking status in pancreatic cancer ...
+
+&lt;table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;"&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;color: black !important;background-color: skyblue !important;text-align: center;"&gt; Effect &lt;/th&gt;
+   &lt;th style="text-align:right;color: black !important;background-color: skyblue !important;text-align: center;"&gt; Estimate &lt;/th&gt;
+   &lt;th style="text-align:left;color: black !important;background-color: skyblue !important;text-align: center;"&gt; Lower 95% CI &lt;/th&gt;
+   &lt;th style="text-align:left;color: black !important;background-color: skyblue !important;text-align: center;"&gt; Upper 95% CI &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; CDE &lt;/td&gt;
+   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.79142 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.39887 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.57028 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; NDE &lt;/td&gt;
+   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.80390 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.50599 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.27721 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; NIE &lt;/td&gt;
+   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.97569 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.87098 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.09298 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; Total Effect &lt;/td&gt;
+   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.78436 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.5008 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.22848 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; Proportion Mediated &lt;/td&gt;
+   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.09064 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;br&gt;
+
+👉 The number of potential estimates for the CDE is equal to the number of levels that the mediator can take  
++ CDE of male sex compared to female sex when forcing smoking status as never smokers is 0.79
++ CDE of male sex compared to female sex when forcing smoking status as previous or current smoker is 0.82
+
+.footnote.pull-left[Full code available at: https://github.com/GerkeLab/mediator/blob/master/man/bsp2020/abstract.Rmd]
+
+---
+
+## Is the effect of sex on overall survival mediated through smoking status in pancreatic cancer ...
+
+NDE:  the effect of the exposure (male sex) on the outcome (overall survival) if the pathway from the exposure to the mediator (smoking status) was removed
++ HR for male sex compared to female sex, when each individuals level of smoking is kept at the level it would take in the absence of sex, is 0.80 (0.51-1.28)
+
+&lt;br&gt;
+
+.h-center[
+![](figures/results_dag_nde.png)
+]
+
+
+---
+
+## Is the effect of sex on overall survival mediated through smoking status in pancreatic cancer ...
+
+NIE: the effect of the exposure (male sex) that operates by changing the mediator (smoking status)
++ HR for male sex, if smoking status was changed from the level it would take if sex was female to the level if sex was male, is 0.98 (0.87-1.09)
+
+
+&lt;br&gt;
+
+.h-center[
+![](figures/results_dag_nie.png)
+]
+
+
+---
+
+## Is the effect of sex on overall survival mediated through smoking status in pancreatic cancer ...
+
+TE:  the overall effect of the exposure (male sex) on the outcome (overall survival)
++ HR for male sex compared to female sex overall is 0.78 (0.50-1.23)
+
+&lt;br&gt;
+
+.h-center[
+![](figures/results_dag_te.png)
+]
+
+---
+
+## SAS, STATA and R - Oh My!
+
+`mediator` is the sister program of `%mediator` the SAS/SPSS macro developed by Valeri and VanderWeele 
+
+Confidence Intervals 
++ `%mediator` uses hard coded `1.96` and `-1.96` while `mediator` uses  `c(-1,1)*qnorm(.975)` for the Delta method
++ during bootstrapping, `%mediator` bootstraps effect estimates and CIs while `mediator` only bootstraps the CIs
++ minor differences due to rounding 
+    
+Speed differences 
++ `mediator` up to 1000x faster than `%mediator` when using bootstrapping
+
+Covariates
++ `%mediator` uses dummy variables for multi-level factors while `mediator` allows multi-level and character variables in models 
+
+`mediation` package
++ different set of terminology 
++ different estimation approach
+
+---
+
+## Package == Reproducibility
+
+Easy to share and implement new methods
+
+R packages are more than just a bundle of code : tests, data, documentation, ...
+
+.h-center[
+&lt;img src="figures/edited_equation.png"&gt; 
+]
+
+---
+
+## GitHub
+
+.h-center[
+&lt;img src="figures/mediator_github_page_edit1.png"&gt; 
+]
+
+---
+
+## GitHub
+
+.h-center[
+&lt;img src="figures/travis_screen_shot.png"&gt; 
+]
+
+---
+
+## GitHub
+
+.h-center[
+&lt;img src="figures/codecov_screen_shot.png"&gt; 
+]
+
+---
+
+.h-center[
+&lt;img src="figures/hex_wall.png"&gt;
+]
+
+
+&lt;style type="text/css"&gt;
+.talk-logo {
+  width: 480px;
+  height: 556px;
+  position: absolute;
+  top: 5%;
+  left: 50%;
+  background-image: url('figures/mediator_hex.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+.talk-meta {
+  #font-family: Overpass;
+  position: absolute;
+  text-align: left;
+  bottom: 10px;
+  left: 25px;
+}
+.talk-author {
+  color: #444;
+  font-weight: bold;
+  font-size: 1.5em;
+  line-height: 1em;
+}
+.talk-date {
+  color: #666;
+  font-size: 1.25em;
+  line-height: 0;
+}
+.hide-count .remark-slide-number {
+  display: none;
+}
+
+# sizing 
+.w-50 {
+  width: 50%;
+}
+.w-25 {
+  width: 25%;
+}
+.w-75 {
+  width: 75%;
+}
+.h-center {
+  margin: 0 auto;
+}
+
+# colors
+
+.accent-other { 
+  color: light brilliant orange,
+}
+.accent-orange { 
+  color: #f09749; 
+}
+.accent-blue { 
+  color: skyblue; 
+}
+
+&lt;/style&gt;
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

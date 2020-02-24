@@ -1,0 +1,27 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1581360922510.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "254|18|273|0|\n280|50|334|0|\n450|20|509|0|\n",
+    "hash" : "0",
+    "id" : "E045BE24",
+    "lastKnownWriteTime" : 1582568229,
+    "last_content_update" : 1582568229126,
+    "path" : "~/Documents/github/Archives/Talks/BSP2020/BSP_slides_2020.Rmd",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "420,0",
+        "last_setup_crc32" : "",
+        "scrollLine" : "408",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
