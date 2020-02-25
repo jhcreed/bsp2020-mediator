@@ -242,21 +242,21 @@ Default arguments
     
 ---
 
-## Is the effect of being uninsured on overall survival mediated through time to treatment in prostate cancer ...
+## Is the effect of being uninsured on overall survival mediated through treatment delays in prostate cancer ...
 
 Based on &gt; 500,000 prostate cancer cases in the National Cancer Data Base
-+ Those who are uninsured have a longer average TTT than those who are insured
++ A greater proportion of those who are uninsured experience a 6 month treatment delay than those who are insured
 + Being uninsured is associated with worse outcomes in prostate cancer
-+ Longer TTT is protective towards overall survival in prostate cancer
++ A 6 month treatment delay is associated with worse overall survival in prostate cancer than those who receive more timely treatment
 
 
-.h-center[
+.w-75.h-center[
 ![](figures/results_dag.png)
 ]
 
 ---
 
-## Is the effect of being uninsured on overall survival mediated through time to treatment in prostate cancer ...
+## Is the effect of being uninsured on overall survival mediated through treatment delays in prostate cancer ...
 
 
 ```r
@@ -266,12 +266,15 @@ library(survival)
 
 dat %&gt;% 
   # do some data cleaning here ...
-  mediator(out.model = coxph(Surv(DX_LASTCONTACT_DEATH_MONTHS, death) ~ 
-                               uninsured + delay_months +  PSA + cGleasonSum + AGE + racev2 + 
-                               (uninsured*delay_months), 
-                             data = .),
-                   med.model = glm(delay_months ~ uninsured + PSA + cGleasonSum + AGE + racev2, 
-                                   data = dat_clean),
+  mediator(data = dat_clean,
+                   out.model = coxph(Surv(DX_LASTCONTACT_DEATH_MONTHS, death) ~
+                                       uninsured + delay_6months + 
+                                       PSA + cGleasonSum + AGE + racev2 + 
+                                       (uninsured*delay_6months), 
+                                     data = dat_clean),
+                   med.model = glm(delay_6months ~ uninsured +
+                                     PSA + cGleasonSum + AGE + racev2, 
+                                   data = dat_clean, family = "binomial"),
                    treat = "uninsured")
 ```
 
@@ -279,7 +282,7 @@ dat %&gt;%
 
 ---
 
-## Is the effect of being uninsured on overall survival mediated through time to treatment in prostate cancer ...
+## Is the effect of being uninsured on overall survival mediated through treatment delays in prostate cancer ...
 
 &lt;table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;"&gt;
  &lt;thead&gt;
@@ -293,31 +296,31 @@ dat %&gt;%
 &lt;tbody&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; CDE &lt;/td&gt;
-   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.96871 &lt;/td&gt;
-   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.7797 &lt;/td&gt;
-   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 2.17778 &lt;/td&gt;
+   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.95312 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.8208 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 2.09506 &lt;/td&gt;
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; NDE &lt;/td&gt;
-   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.94190 &lt;/td&gt;
-   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.8135 &lt;/td&gt;
-   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 2.07939 &lt;/td&gt;
+   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.93443 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.80648 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 2.07145 &lt;/td&gt;
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; NIE &lt;/td&gt;
-   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.98742 &lt;/td&gt;
-   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.97955 &lt;/td&gt;
-   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.99535 &lt;/td&gt;
+   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.99534 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.9891 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.00163 &lt;/td&gt;
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; Total Effect &lt;/td&gt;
-   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.91747 &lt;/td&gt;
-   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.78941 &lt;/td&gt;
-   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 2.05469 &lt;/td&gt;
+   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.92542 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.79839 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 2.06143 &lt;/td&gt;
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; Proportion Mediated &lt;/td&gt;
-   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; -0.02663 &lt;/td&gt;
+   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; -0.00973 &lt;/td&gt;
    &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt;  &lt;/td&gt;
    &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt;  &lt;/td&gt;
   &lt;/tr&gt;
@@ -327,50 +330,50 @@ dat %&gt;%
 &lt;br&gt;
 
 👉 The number of potential estimates for the CDE is equal to the number of levels that the mediator can take  
-+ CDE of being uninsured compared to insured when forcing TTT as 0 months is 1.97
-+ CDE of being uninsured compared to insured when forcing TTT as 6 months is 1.90
++ CDE of being uninsured compared to insured when forcing treatment to occurr within 6 months is 1.95
++ CDE of being uninsured compared to insured when forcing treatment to occurr after 6 months is 1.57
 
 .footnote.pull-left[Full code available at: https://github.com/jhcreed/bsp2020-mediator]
 
 ---
 
-## Is the effect of being uninsured on overall survival mediated through time to treatment in prostate cancer ...
+## Is the effect of being uninsured on overall survival mediated through treatment delays in prostate cancer ...
 
-NDE:  the effect of the exposure (uninsured) on the outcome (overall survival) if the pathway from the exposure to the mediator (time to treatment) was removed
-+ HR for beinf uninsured compared to insured, when each individuals level of TTT is kept at the level it would take in the absence of insurance status, is 1.94 (1.81-2.08)
+NDE:  the effect of the exposure (uninsured) on the outcome (overall survival) if the pathway from the exposure to the mediator (delays in treatment) was removed
++ HR for beinf uninsured compared to insured, when each individuals level of delay is kept at the level it would take in the absence of insurance status, is 1.93 (1.81-2.07)
 
 &lt;br&gt;
 
-.h-center[
+.w-75.h-center[
 ![](figures/results_dag_nde.png)
 ]
 
 
 ---
 
-## Is the effect of being uninsured on overall survival mediated through time to treatment in prostate cancer ...
+## Is the effect of being uninsured on overall survival mediated through treatment delays in prostate cancer ...
 
-NIE: the effect of the exposure (uninsured) that operates by changing the mediator (time to treatment)
-+ HR for being uninsured, if TTT was changed from the level it would take if insurance status was insured to the level if insurance status was uninsured, is 0.99 (0.98-1.00)
+NIE: the effect of the exposure (uninsured) that operates by changing the mediator (treatment delays)
++ HR for being uninsured, if TTT was changed from the level it would take if insurance status was insured to the level if insurance status was uninsured, is 1.00 (0.99-1.00)
 
 
 &lt;br&gt;
 
-.h-center[
+.w-75.h-center[
 ![](figures/results_dag_nie.png)
 ]
 
 
 ---
 
-## Is the effect of being uninsured on overall survival mediated through time to treatment in prostate cancer ...
+## Is the effect of being uninsured on overall survival mediated through treatment delays in prostate cancer ...
 
 TE:  the overall effect of the exposure (uninsured) on the outcome (overall survival)
-+ HR for uninsured compared to insured, overall, is 1.92 (1.79-2.05)
++ HR for uninsured compared to insured, overall, is 1.93 (1.80-2.06)
 
 &lt;br&gt;
 
-.h-center[
+.w-75.h-center[
 ![](figures/results_dag_te.png)
 ]
 
