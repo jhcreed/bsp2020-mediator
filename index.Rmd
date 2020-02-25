@@ -123,24 +123,8 @@ Indirect effect = $\theta_{2} \beta_{1}$
 `r emo::ji("point_right")` .accent-blue[Does not accommodate exposure-mediator interactions]
 
 ---
-class: center middle methods-title
-
-`r xaringanExtra::text_poster(
-  "Causal 
-  Inference 
-  Methods",
-  width = "90%",
-  height = "80%"
-)`
-
-```{css echo=FALSE}
-# .strive-to-recruit .text-poster .line-container {
-#   color: #000000;
-# }
-.methods-title {
-  background: #87CEEB;
-}
-```
+background-image: url(figures/causal_title.png)
+background-size: 105%
 
 ---
 
@@ -478,7 +462,6 @@ R packages are more than just a bundle of code : tests, data, documentation, ...
 <img src="figures/hex_wall.png">
 ]
 
-
 ```{css, echo=FALSE}
 .talk-logo {
   width: 480px;
@@ -522,6 +505,9 @@ R packages are more than just a bundle of code : tests, data, documentation, ...
 .w-75 {
   width: 75%;
 }
+.w-115 {
+  width: 115%;
+}
 .h-center {
   margin: 0 auto;
 }
@@ -541,5 +527,6 @@ R packages are more than just a bundle of code : tests, data, documentation, ...
 .accent-blue { 
   color: skyblue; 
 }
+
 
 ```
