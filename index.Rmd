@@ -60,7 +60,7 @@ Causal relationship
 + Understanding the mechanics behind an association 
 + NOT prediction
     
-Estimate the direct and indirect effects 
+Goal of mediation analysis: Estimate the direct and indirect effects 
 
 .h-center[
 ![](figures/basic_example_dag.png)
@@ -77,13 +77,13 @@ Estimate the direct and indirect effects
 
 DAGs contain variables of interest and common causes
 
-Time ordered 
-
 Quickly assess assocations between variables 
 
 Rules for reading DAGs 
 + .accent-blue[ Modern Epidemiology - Chapter 12 ]
 + .accent-blue[ Causal Inference - https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/ ] 
+
+.footnote.pull-left[Tool for drawing DAGs: https://apps.gerkelab.com/shinyDAG/]
 
 ---
 
@@ -100,6 +100,10 @@ Criteria to be a mediator:
 + After controlling for the mediator, the previously significant relationship between the exposure and the outcome is no longer significant .accent-blue[ ( `r emo::ji("grimacing")` unless it partial mediaton) ]
 
 ---
+
+background-image: url(figures/bk_dag.png)
+background-size: 32%
+background-position: 95% 12%
 
 ## Baron and Kenny approach 
 
@@ -139,6 +143,10 @@ class: center middle methods-title
 ```
 
 ---
+
+background-image: url(figures/bk_dag.png)
+background-size: 32%
+background-position: 95% 12%
 
 ## Allowing exposure-mediator interactions
 
@@ -187,7 +195,7 @@ Total effect of A = NDE + NIE
 
 ---
 
-## Lets see the DAG 
+## Mediation or confounding ...
 
 .h-center[
 <img src="figures/jama_dag.png">
@@ -200,6 +208,18 @@ JAMA ONCOLOGY
 Confounder: variables that are related to both the intervention and the outcome, but are not on the causal pathway
 Mediator: on the causal pathway
 "... we adjusted for cancer and treatment-related confounders ..."
+
+---
+
+background-image: url(figures/tear-emoji.png)
+background-size: 20%
+background-position: 50% 75%
+
+## Mediation or confounding ...
+
+.h-center[
+<img src="figures/jama_screenshot_confounders.png">
+]
 
 ---
 
@@ -237,11 +257,12 @@ Default arguments
     
 ---
 
-## Is the effect of sex on overall survival mediated through smoking status in pancreatic cancer ...
+## Is the effect of being uninsured on overall survival mediated through time to treatment in prostate cancer ...
 
-+ Smoking is more prevalent in males than females 
-+ Males have higher incidence and death rates for pancreatic cancer than females
-+ Tobacco smoking the only established modifiable risk factor for pancreatic cancer
+Based on > 500,000 prostate cancer cases in the National Cancer Data Base
++ Those who are uninsured have a longer average TTT than those who are insured
++ Being uninsured is associated with worse outcomes in prostate cancer
++ Longer TTT is protective towards overall survival in prostate cancer
 
 
 .h-center[
@@ -250,33 +271,29 @@ Default arguments
 
 ---
 
-## Is the effect of sex on overall survival mediated through smoking status in pancreatic cancer ...
+## Is the effect of being uninsured on overall survival mediated through time to treatment in prostate cancer ...
 
 ```{r, eval=FALSE}
 library(mediator)
 library(tidyverse)
 library(survival)
 
-load("~/Documents/github/TCGAclinical/data/clinical_survival_pancancer_atlas.RData")
-
 dat %>% 
-  filter(acronym == "PAAD") %>% 
   # do some data cleaning here ...
-  mediator(out.model = coxph(Surv(OS.time,OS) ~ gender_binary + ever_smoker + 
-                             age_at_initial_pathologic_diagnosis + 
-                             histological_grade + gender_binary*ever_smoker,
-                           data = .),
-           med.model = glm(ever_smoker ~ gender_binary + 
-                           age_at_initial_pathologic_diagnosis + histological_grade,
-                           data = .,
-                           family = "binomial"),
-           treat = "gender_binary" )
+  mediator(out.model = coxph(Surv(DX_LASTCONTACT_DEATH_MONTHS, death) ~ 
+                               uninsured + delay_months +  PSA + cGleasonSum + AGE + racev2 + 
+                               (uninsured*delay_months), 
+                             data = .),
+                   med.model = glm(delay_months ~ uninsured + PSA + cGleasonSum + AGE + racev2, 
+                                   data = dat_clean),
+                   treat = "uninsured")
 ```
 
-.footnote.pull-left[Full code available at: https://github.com/GerkeLab/mediator/blob/master/man/bsp2020/abstract.Rmd]
+.footnote.pull-left[Full code available at: https://github.com/jhcreed/bsp2020-mediator]
+
 ---
 
-## Is the effect of sex on overall survival mediated through smoking status in pancreatic cancer ...
+## Is the effect of being uninsured on overall survival mediated through time to treatment in prostate cancer ...
 
 ```{r, echo=FALSE, message = FALSE, warning=FALSE}
 
@@ -285,46 +302,51 @@ library(tidyverse)
 library(survival)
 library(kableExtra)
 
-load("~/Documents/github/TCGAclinical/data/clinical_survival_pancancer_atlas.RData")
+load("/Volumes/usersC$/NCDB/ACSgrant/gleasonUpgrading/data/raw.Rdata")
 
-for_analysis <- dat %>% 
-  filter(acronym == "PAAD") %>% 
-  mutate(ever_smoker = case_when(
-    tobacco_smoking_history == "Lifelong Non-smoker" ~ 0,
-    tobacco_smoking_history == "Current reformed smoker for < or = 15 years" ~ 1,
-    tobacco_smoking_history == "Current reformed smoker for > 15 years" ~ 1,
-    tobacco_smoking_history == "Current Reformed Smoker, Duration Not Specified" ~ 1,
-    tobacco_smoking_history == "Current smoker" ~ 1,
-    TRUE ~ NA_real_
+dat_clean <- dat %>%
+  filter(RACE %in% c(1,2)) %>%
+  mutate(RACE = recode(RACE,
+                       `1`="White",
+                       `2`="Black")) %>%
+  # clinical Gleason values
+  mutate(cGleasonSum = ifelse(CS_SITESPECIFIC_FACTOR_8 %in% c(988,998,999),
+                              NA,CS_SITESPECIFIC_FACTOR_8)) %>%
+  # shivs filtering (can probably be less stringent)
+  filter(HISTOLOGY %in% c(8140, 8255, 8147, 8310, 8480, 8500, 8550, 8560, 8200) & 
+           BEHAVIOR == 3 & DIAGNOSTIC_CONFIRMATION == 1) %>% 
+  filter(!is.na(PUF_VITAL_STATUS) & !is.na(DX_LASTCONTACT_DEATH_MONTHS)) %>% 
+  filter(!(TNM_CLIN_M %in% c("c1", "c1A", "c1B", "c1C"))) %>% 
+  # only those with private insurance or no insurance/medicaid
+  filter(INSURANCE_STATUS %in% c(0, 1, 2)) %>%
+  mutate(uninsured = case_when(
+    INSURANCE_STATUS == 1 ~ 0,
+    TRUE ~ 1
   )) %>% 
-  mutate(gender_binary = case_when(
-    gender == "MALE" ~ 1,
-    gender == "FEMALE" ~ 0
-  )) %>%
-  mutate(histological_grade = case_when(
-    histological_grade == "GX" ~ NA_character_,
-    TRUE ~ histological_grade
-  )) %>% 
-  mutate(pack_yr = case_when(
-    ever_smoker == 0 ~ 0,
-    ever_smoker == 1 ~ number_pack_years_smoked,
-    TRUE  ~ number_pack_years_smoked
-  )) %>%
-  mutate(diab = case_when(
-    history_of_diabetes == "[Not Available]" ~ NA_character_,
-    history_of_diabetes == "[Unknown]" ~ NA_character_,
-    TRUE ~ history_of_diabetes 
-  ))
+  # filtering based on having values needed for analysis
+  filter(!is.na(DX_RX_STARTED_DAYS)) %>%
+  mutate(racev2 = ifelse(RACE=="Black",1,0)) %>%
+  mutate(delay_months = DX_RX_STARTED_DAYS/30.5) %>%
+  # fix PSA
+  mutate(PSA = ifelse(CS_SITESPECIFIC_FACTOR_1>990,NA,CS_SITESPECIFIC_FACTOR_1/10)) %>%
+  # cleaning death
+  # include death
+  mutate(PUF_VITAL_STATUS = recode(PUF_VITAL_STATUS,
+                                   `0` = "Dead",
+                                   `1` = "Alive")) %>%
+  mutate(death = ifelse(PUF_VITAL_STATUS=="Dead",1,
+                        ifelse(PUF_VITAL_STATUS=="Alive",0,NA)))
 
-mediator(data = for_analysis,
-         out.model = coxph(Surv(OS.time,OS) ~ gender_binary + ever_smoker + 
-                             age_at_initial_pathologic_diagnosis + 
-                             histological_grade + gender_binary*ever_smoker,
-                           data = for_analysis),
-         med.model = glm(ever_smoker ~ gender_binary + 
-                           age_at_initial_pathologic_diagnosis + histological_grade,
-                         data = for_analysis, family = "binomial"),
-         treat = "gender_binary") %>%
+mediator(data = dat_clean,
+                   out.model = coxph(Surv(DX_LASTCONTACT_DEATH_MONTHS, death) ~
+                                       uninsured + delay_months + 
+                                       PSA + cGleasonSum + AGE + racev2 + 
+                                       (uninsured*delay_months), 
+                                     data = dat_clean),
+                   med.model = glm(delay_months ~ uninsured +
+                                     PSA + cGleasonSum + AGE + racev2, 
+                                   data = dat_clean),
+                   treat = "uninsured") %>%
   replace_na(list(`Lower 95% CI` = "",
                   `Upper 95% CI` = "")) %>%
   kable() %>%
@@ -337,17 +359,17 @@ mediator(data = for_analysis,
 <br>
 
 `r emo::ji("point_right")` The number of potential estimates for the CDE is equal to the number of levels that the mediator can take  
-+ CDE of male sex compared to female sex when forcing smoking status as never smokers is 0.79
-+ CDE of male sex compared to female sex when forcing smoking status as previous or current smoker is 0.82
++ CDE of being uninsured compared to insured when forcing TTT as 0 months is 1.97
++ CDE of being uninsured compared to insured when forcing TTT as 6 months is 1.90
 
-.footnote.pull-left[Full code available at: https://github.com/GerkeLab/mediator/blob/master/man/bsp2020/abstract.Rmd]
+.footnote.pull-left[Full code available at: https://github.com/jhcreed/bsp2020-mediator]
 
 ---
 
-## Is the effect of sex on overall survival mediated through smoking status in pancreatic cancer ...
+## Is the effect of being uninsured on overall survival mediated through time to treatment in prostate cancer ...
 
-NDE:  the effect of the exposure (male sex) on the outcome (overall survival) if the pathway from the exposure to the mediator (smoking status) was removed
-+ HR for male sex compared to female sex, when each individuals level of smoking is kept at the level it would take in the absence of sex, is 0.80 (0.51-1.28)
+NDE:  the effect of the exposure (uninsured) on the outcome (overall survival) if the pathway from the exposure to the mediator (time to treatment) was removed
++ HR for beinf uninsured compared to insured, when each individuals level of TTT is kept at the level it would take in the absence of insurance status, is 1.94 (1.81-2.08)
 
 <br>
 
@@ -358,10 +380,10 @@ NDE:  the effect of the exposure (male sex) on the outcome (overall survival) if
 
 ---
 
-## Is the effect of sex on overall survival mediated through smoking status in pancreatic cancer ...
+## Is the effect of being uninsured on overall survival mediated through time to treatment in prostate cancer ...
 
-NIE: the effect of the exposure (male sex) that operates by changing the mediator (smoking status)
-+ HR for male sex, if smoking status was changed from the level it would take if sex was female to the level if sex was male, is 0.98 (0.87-1.09)
+NIE: the effect of the exposure (uninsured) that operates by changing the mediator (time to treatment)
++ HR for being uninsured, if TTT was changed from the level it would take if insurance status was insured to the level if insurance status was uninsured, is 0.99 (0.98-1.00)
 
 
 <br>
@@ -373,10 +395,10 @@ NIE: the effect of the exposure (male sex) that operates by changing the mediato
 
 ---
 
-## Is the effect of sex on overall survival mediated through smoking status in pancreatic cancer ...
+## Is the effect of being uninsured on overall survival mediated through time to treatment in prostate cancer ...
 
-TE:  the overall effect of the exposure (male sex) on the outcome (overall survival)
-+ HR for male sex compared to female sex overall is 0.78 (0.50-1.23)
+TE:  the overall effect of the exposure (uninsured) on the outcome (overall survival)
++ HR for uninsured compared to insured, overall, is 1.92 (1.79-2.05)
 
 <br>
 
@@ -494,6 +516,10 @@ R packages are more than just a bundle of code : tests, data, documentation, ...
 .h-center {
   margin: 0 auto;
 }
+.top-0    { top:    0; }
+.right-0  { right:  0; }
+.bottom-0 { bottom: 0; }
+.left-0   { left:   0; }
 
 # colors
 
