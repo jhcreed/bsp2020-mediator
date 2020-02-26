@@ -85,6 +85,11 @@ Criteria to be a mediator:
 + Changing the exposure change the outcome .accent-blue[ ( 😬 unless the indirect and direct effects cancel out) ]
 + After controlling for the mediator, the previously significant relationship between the exposure and the outcome is no longer significant .accent-blue[ ( 😬 unless it partial mediaton) ]
 
+.w-75.h-center[
+&lt;img src="figures/basic_example_dag.png"&gt;
+]
+
+
 ---
 
 background-image: url(figures/bk_dag.png)
@@ -227,13 +232,12 @@ Default arguments
     
 ---
 
-## Is the effect of being uninsured on overall survival mediated through treatment delays in prostate cancer ...
+## Is the effect of being insured on overall survival mediated through surgery in prostate cancer ...
 
 Based on &gt; 500,000 prostate cancer cases in the National Cancer Data Base
-+ A greater proportion of those who are uninsured experience a 6 month treatment delay than those who are insured
-+ Being uninsured is associated with worse outcomes in prostate cancer
-+ A 6 month treatment delay is associated with worse overall survival in prostate cancer than those who receive more timely treatment
-
++ Those who are insured are more likely to receive surgery than those who are uninsured
++ Those who are insured have better overall survival than those who are uninsured
++ Those who receive surgery have better overall survival than those who do not receive surgery
 
 .w-75.h-center[
 ![](figures/results_dag.png)
@@ -241,7 +245,7 @@ Based on &gt; 500,000 prostate cancer cases in the National Cancer Data Base
 
 ---
 
-## Is the effect of being uninsured on overall survival mediated through treatment delays in prostate cancer ...
+## Is the effect of being insured on overall survival mediated through surgery in prostate cancer ...
 
 
 ```r
@@ -253,21 +257,21 @@ dat %&gt;%
   # do some data cleaning here ...
   mediator(data = dat_clean,
                    out.model = coxph(Surv(DX_LASTCONTACT_DEATH_MONTHS, death) ~
-                                       uninsured + delay_6months + 
+                                       insured + surgery + 
                                        PSA + cGleasonSum + AGE + racev2 + 
-                                       (uninsured*delay_6months), 
+                                       (insured*surgery), 
                                      data = dat_clean),
-                   med.model = glm(delay_6months ~ uninsured +
+                   med.model = glm(surgery ~ insured +
                                      PSA + cGleasonSum + AGE + racev2, 
                                    data = dat_clean, family = "binomial"),
-                   treat = "uninsured")
+                   treat = "insured")
 ```
 
 .footnote.pull-left[Full code available at: https://github.com/jhcreed/bsp2020-mediator]
 
 ---
 
-## Is the effect of being uninsured on overall survival mediated through treatment delays in prostate cancer ...
+## Is the effect of being insured on overall survival mediated through surgery in prostate cancer ...
 
 &lt;table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;"&gt;
  &lt;thead&gt;
@@ -281,31 +285,31 @@ dat %&gt;%
 &lt;tbody&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; CDE &lt;/td&gt;
-   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.95312 &lt;/td&gt;
-   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.8208 &lt;/td&gt;
-   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 2.09506 &lt;/td&gt;
+   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.61238 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.56128 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.66814 &lt;/td&gt;
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; NDE &lt;/td&gt;
-   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.93443 &lt;/td&gt;
-   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.80648 &lt;/td&gt;
-   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 2.07145 &lt;/td&gt;
+   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.53448 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.49786 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.57378 &lt;/td&gt;
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; NIE &lt;/td&gt;
-   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.99534 &lt;/td&gt;
-   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.9891 &lt;/td&gt;
-   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.00163 &lt;/td&gt;
+   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.92258 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.91319 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.93207 &lt;/td&gt;
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; Total Effect &lt;/td&gt;
-   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.92542 &lt;/td&gt;
-   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 1.79839 &lt;/td&gt;
-   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 2.06143 &lt;/td&gt;
+   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.49310 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.45907 &lt;/td&gt;
+   &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.52965 &lt;/td&gt;
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt; Proportion Mediated &lt;/td&gt;
-   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; -0.00973 &lt;/td&gt;
+   &lt;td style="text-align:right;font-weight: bold;background-color: white !important;text-align: center;"&gt; 0.08163 &lt;/td&gt;
    &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt;  &lt;/td&gt;
    &lt;td style="text-align:left;font-weight: bold;background-color: white !important;text-align: center;"&gt;  &lt;/td&gt;
   &lt;/tr&gt;
@@ -315,31 +319,29 @@ dat %&gt;%
 &lt;br&gt;
 
 👉 The number of potential estimates for the CDE is equal to the number of levels that the mediator can take  
-+ CDE of being uninsured compared to insured when forcing treatment to occurr within 6 months is 1.95
-+ CDE of being uninsured compared to insured when forcing treatment to occurr after 6 months is 1.57
++ CDE of being insured compared to uninsured when forcing surgery not to occur is 0.47 (0.42-0.52)
++ CDE of being insured compared to uninsured when forcing surgery to occur is 0.61 (0.56-0.67)
 
 .footnote.pull-left[Full code available at: https://github.com/jhcreed/bsp2020-mediator]
 
 ---
 
-## Is the effect of being uninsured on overall survival mediated through treatment delays in prostate cancer ...
+## Is the effect of being insured on overall survival mediated through surgery in prostate cancer ...
 
-NDE:  the effect of the exposure (uninsured) on the outcome (overall survival) if the pathway from the exposure to the mediator (delays in treatment) was removed
-+ HR for beinf uninsured compared to insured, when each individuals level of delay is kept at the level it would take in the absence of insurance status, is 1.93 (1.81-2.07)
+NDE:  the effect of the exposure (insured) on the outcome (overall survival) if the pathway from the exposure to the mediator (surgery) was removed
++ HR for being insured compared to uninsured, when each individuals surgical status is kept at the level it would take in the absence of insurance status, is 0.53 (0.50-0.57)
 
-&lt;br&gt;
-
-.w-75.h-center[
+.w-70.h-center[
 ![](figures/results_dag_nde.png)
 ]
 
 
 ---
 
-## Is the effect of being uninsured on overall survival mediated through treatment delays in prostate cancer ...
+## Is the effect of being insured on overall survival mediated through surgery in prostate cancer ...
 
-NIE: the effect of the exposure (uninsured) that operates by changing the mediator (treatment delays)
-+ HR for being uninsured, if TTT was changed from the level it would take if insurance status was insured to the level if insurance status was uninsured, is 1.00 (0.99-1.00)
+NIE: the effect of the exposure (insured) that operates by changing the mediator (surgery)
++ HR for being insured, if surgical status was changed from the level it would take if insurance status was uninsured to the level if insurance status was insured, is 0.92 (0.91-0.93)
 
 
 &lt;br&gt;
@@ -351,10 +353,10 @@ NIE: the effect of the exposure (uninsured) that operates by changing the mediat
 
 ---
 
-## Is the effect of being uninsured on overall survival mediated through treatment delays in prostate cancer ...
+## Is the effect of being insured on overall survival mediated through surgery in prostate cancer ...
 
-TE:  the overall effect of the exposure (uninsured) on the outcome (overall survival)
-+ HR for uninsured compared to insured, overall, is 1.93 (1.80-2.06)
+TE:  the overall effect of the exposure (insured) on the outcome (overall survival)
++ HR for insured compared to uninsured, overall, is 0.49 (0.46-0.53)
 
 &lt;br&gt;
 
@@ -467,6 +469,9 @@ R packages are more than just a bundle of code : tests, data, documentation, ...
 }
 .w-75 {
   width: 75%;
+}
+.w-70 {
+  width: 70%;
 }
 .w-115 {
   width: 115%;
