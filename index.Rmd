@@ -112,7 +112,7 @@ background-position: 95% 12%
 
 ## Baron and Kenny approach 
 
-If .accent-orange[X] is the exposure, .accent-orange[ Y ] the outcome, .accent-orange[ M ] the mediator and .accent-orange[ C ] the covariates
+If .accent-orange[ A ] is the exposure, .accent-orange[ Y ] the outcome, .accent-orange[ M ] the mediator and .accent-orange[ C ] the covariates
 + Y and M are continuous
     
 Step 1: Fit E[M] = $\beta_{0}$ + $\beta_{1} a$ + $\beta_{2} c$
@@ -144,13 +144,13 @@ Step 1: Fit E[M] = $\beta_{0} + \beta_{1} a + \beta_{2} c$
 
 Step 2: Fit E[Y] = $\theta_{0} + \theta_{1} a + \theta_{2} m + \theta_{3} am + \theta_{4} c$
 
-.accent-blue[Assuming a binary exposure changing level a^*^ = 0 to a = 1]
+.accent-blue[Assuming a binary exposure changing level a* = 0 to a = 1]
 
 
 
-> Controlled direct effect = $( \theta_{0} + \theta_{3} m)(a - a^{*})$
+> Controlled direct effect = $( \theta_{1} + \theta_{3} m)(a - a^{*})$
 
-> Natural indirect effect = $\{ \theta_{0} + \theta_{3} ( \beta_{0} + \beta_{1} a^{*} + \beta_{2} c) \}(a - a^{*})$
+> Natural indirect effect = $\{ \theta_{1} + \theta_{3} ( \beta_{0} + \beta_{1} a^{*} + \beta_{2} c) \}(a - a^{*})$
 
 > Natural indirect effect = $( \theta_{2} \beta_{1} + \theta_{3} \beta_{1}a) (a - a^{*})$
 
@@ -164,10 +164,10 @@ Step 2: Fit E[Y] = $\theta_{0} + \theta_{1} a + \theta_{2} m + \theta_{3} am + \
 
 ## Interpreting the estimates
 
-Controlled direct effect = $( \theta_{0} + \theta_{3} m)(a - a^{*})$
+Controlled direct effect = $( \theta_{1} + \theta_{3} m)(a - a^{*})$
 + How much the outcome would change if exposure changed from a∗ to a and the mediator were controlled at level m in the population
 
-Natural indirect effect = $\{ \theta_{0} + \theta_{3} ( \beta_{0} + \beta_{1} a^{*} + \beta_{2} c) \}(a - a^{*})$
+Natural indirect effect = $\{ \theta_{1} + \theta_{3} ( \beta_{0} + \beta_{1} a^{*} + \beta_{2} c) \}(a - a^{*})$
 + How much the outcome would change if exposure were set at level a versus a∗ but for each individual the mediator were kept at the level it would have taken in the absence of exposure
 
 Natural indirect effect = $( \theta_{2} \beta_{1} + \theta_{3} \beta_{1}a) (a - a^{*})$
@@ -268,15 +268,14 @@ library(survival)
 
 dat %>% 
   # do some data cleaning here ...
-  mediator(data = dat_clean,
-                   out.model = coxph(Surv(DX_LASTCONTACT_DEATH_MONTHS, death) ~
-                                       insured + surgery + 
-                                       PSA + cGleasonSum + AGE + racev2 + 
-                                       (insured*surgery), 
-                                     data = dat_clean),
-                   med.model = glm(surgery ~ insured +
-                                     PSA + cGleasonSum + AGE + racev2, 
-                                   data = dat_clean, family = "binomial"),
+  mediator(out.model = coxph(Surv(DX_LASTCONTACT_DEATH_MONTHS, death) ~
+                              insured + surgery + 
+                              PSA + cGleasonSum + AGE + racev2 + 
+                              (insured*surgery), 
+                            data = .),
+           med.model = glm(surgery ~ insured +
+                            PSA + cGleasonSum + AGE + racev2, 
+                            data = ., family = "binomial"),
                    treat = "insured")
 ```
 
@@ -364,7 +363,7 @@ mediator(data = dat_clean,
 ## Is the effect of being insured on overall survival mediated through surgery in prostate cancer ...
 
 NDE:  the effect of the exposure (insured) on the outcome (overall survival) if the pathway from the exposure to the mediator (surgery) was removed
-+ HR for being insured compared to uninsured, when each individuals surgical status is kept at the level it would take in the absence of insurance status, is 0.53 (0.50-0.57)
++ HR for being insured compared to uninsured, when each individual's surgical status is kept at the level it would take in the absence of insurance status, is 0.53 (0.50-0.57)
 
 .w-70.h-center[
 ![](figures/results_dag_nde.png)
@@ -416,7 +415,7 @@ Speed differences
 Covariates
 + `%mediator` uses dummy variables for multi-level factors while `mediator` allows multi-level and character variables in models 
 
-`mediation` package
+`mediation` R package
 + different set of terminology 
 + different estimation approach
 
